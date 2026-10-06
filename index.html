@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TrabajAR v2 — Oficios a domicilio</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --tile: #f3f3f3;
+    --tile-hover: #e9e9e9;
+    --ink: #0b0b0c;
+    --muted: #6b6b6b;
+    --line: #e8e8e8;
+    --accent: #e5430a;
+    --accent-soft: #fdece5;
+    --ok: #0e8345;
+    --ok-soft: #e6f4ec;
+    --radius: 16px;
+    --shadow: 0 6px 24px rgba(0, 0, 0, .10);
+    --tabbar-h: 62px;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, p { margin: 0; }
+  h1 { font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: -.02em; }
+  h2 { font-size: 20px; line-height: 1.2; font-weight: 700; letter-spacing: -.01em; }
+  h3 { font-size: 16px; font-weight: 700; }
+  a { color: inherit; text-decoration: none; }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .ic { flex: none; display: block; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .grow { flex: 1; min-width: 0; }
+  .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---------- Shell ---------- */
+  .topbar { position: sticky; top: 0; z-index: 30; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .topbar-inner { max-width: 1120px; margin: 0 auto; height: 56px; padding: 0 16px; display: flex; align-items: center; gap: 12px; }
+  .brand { font-weight: 800; font-size: 19px; letter-spacing: -.03em; }
+  .brand span { color: var(--accent); }
+  .addr { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; font-weight: 600; padding: 8px 0; }
+  .addr .ic:first-child { color: var(--accent); }
+  .topnav { display: none; gap: 4px; }
+  .topnav a { padding: 8px 14px; border-radius: 999px; font-weight: 600; color: var(--muted); }
+  .topnav a:hover, .topnav a.active { background: var(--tile); color: var(--ink); }
+
+  .container { max-width: 1120px; margin: 0 auto; padding: 16px 16px calc(var(--tabbar-h) + 96px); }
+
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    display: grid; grid-template-columns: repeat(4, 1fr); background: var(--bg); border-top: 1px solid var(--line);
+  }
+  .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--muted); }
+  .tabbar a.active { color: var(--ink); }
+  .tabbar a.active .ic { stroke-width: 2.4; }
+  body.immersive .tabbar { display: none; }
+  body.immersive .container { padding-bottom: 120px; }
+
+  /* ---------- Primitives ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 52px; padding: 0 20px; border-radius: 12px;
+    background: var(--ink); color: #fff; font-weight: 700; font-size: 16px;
+  }
+  .btn:hover { background: #2a2a2c; }
+  .btn:disabled { background: var(--tile); color: #a8a8a8; cursor: not-allowed; }
+  .btn.block { display: flex; width: 100%; }
+  .btn.light { background: var(--tile); color: var(--ink); }
+  .btn.light:hover { background: var(--tile-hover); }
+  .btn.sm { min-height: 36px; padding: 0 14px; font-size: 13px; border-radius: 999px; }
+  .btn.danger { background: none; color: #c0271a; }
+  .btn .right { margin-left: auto; }
+
+  .round { width: 44px; height: 44px; border-radius: 50%; background: var(--tile); display: grid; place-items: center; flex: none; }
+  .round:hover { background: var(--tile-hover); }
+  .round.float { background: #fff; box-shadow: var(--shadow); }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex: none;
+    padding: 9px 14px; border-radius: 999px; background: var(--tile); font-size: 14px; font-weight: 600;
+  }
+  .chip:hover { background: var(--tile-hover); }
+  .chip.on { background: var(--ink); color: #fff; }
+  .hscroll { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; margin: 0 -16px; padding: 0 16px 4px; }
+  .hscroll::-webkit-scrollbar { display: none; }
+  .hscroll > * { scroll-snap-align: start; scroll-margin-left: 16px; }
+  .wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; background: var(--tile); }
+  .tag.ok { background: var(--ok-soft); color: var(--ok); }
+  .tag.hot { background: var(--accent-soft); color: var(--accent); }
+
+  .avatar { flex: none; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--ink); color: #fff; }
+  .avatar.sm { width: 36px; height: 36px; font-size: 13px; }
+  .avatar.lg { width: 84px; height: 84px; font-size: 26px; border: 4px solid #fff; }
+  .star { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; }
+  .star .ic { fill: currentColor; }
+
+  .section { margin-top: 32px; }
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-head a { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 2px; }
+
+  .row { display: flex; align-items: center; gap: 14px; padding: 14px 0; width: 100%; text-align: left; }
+  .rowlist > * + * { border-top: 1px solid var(--line); }
+  .divider { height: 8px; background: var(--tile); margin: 20px -16px; }
+
+  .pagehead { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .empty { text-align: center; padding: 56px 16px; color: var(--muted); }
+  .empty h2 { color: var(--ink); margin-bottom: 6px; }
+  .empty .btn { margin-top: 20px; }
+
+  .input { width: 100%; min-height: 52px; padding: 14px 16px; border-radius: 12px; border: 2px solid transparent; background: var(--tile); }
+  .input:focus { outline: none; border-color: var(--ink); background: #fff; }
+  textarea.input { min-height: 96px; resize: vertical; }
+
+  .searchpill { position: relative; display: block; }
+  .searchpill .ic { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); }
+  .searchpill .input { border-radius: 999px; padding-left: 50px; min-height: 56px; font-size: 17px; font-weight: 600; }
+  .searchpill .input::placeholder { color: var(--ink); opacity: .75; }
+
+  /* ---------- Home ---------- */
+  .cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .cat { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; text-align: center; }
+  .cat i { width: 100%; aspect-ratio: 1.15; border-radius: var(--radius); background: var(--tile); display: grid; place-items: center; transition: transform .15s, background .15s; }
+  .cat:hover i { background: var(--tile-hover); transform: scale(.97); }
+  .cat.soon { color: var(--muted); }
+  .cat.soon i { background: none; border: 2px dashed var(--line); }
+
+  .promo { flex: none; width: min(84%, 340px); min-height: 132px; border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; background: var(--tile); }
+  .promo b { font-size: 19px; line-height: 1.2; letter-spacing: -.01em; display: block; }
+  .promo p { font-size: 13px; opacity: .8; margin-top: 4px; }
+  .promo .btn { align-self: flex-start; }
+  .promo.dark { background: var(--ink); color: #fff; }
+  .promo.dark .btn { background: #fff; color: var(--ink); }
+  .promo.accent { background: var(--accent); color: #fff; }
+  .promo.accent .btn { background: #fff; color: var(--ink); }
+
+  .tilecard { flex: none; width: 232px; display: flex; flex-direction: column; gap: 2px; }
+  .tilecard .cover { position: relative; height: 124px; border-radius: var(--radius); background: var(--tile); display: grid; place-items: center; margin-bottom: 8px; color: #b9b9b9; }
+  .tilecard .cover .avatar { position: absolute; left: 12px; bottom: 12px; width: 44px; height: 44px; font-size: 14px; }
+  .tilecard .cover .tag { position: absolute; right: 10px; top: 10px; background: #fff; color: var(--ink); }
+  .tilecard .name { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 700; font-size: 16px; }
+
+  .again { flex: none; width: 260px; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius); background: var(--tile); }
+  .again i, .thumb { flex: none; width: 48px; height: 48px; border-radius: 12px; background: #fff; display: grid; place-items: center; }
+
+  .prorow { display: flex; gap: 14px; padding: 14px 0; align-items: center; }
+  .prorow .thumb { width: 76px; height: 76px; border-radius: var(--radius); background: var(--tile); position: relative; }
+  .prorow .thumb .avatar { width: 46px; height: 46px; font-size: 14px; }
+  .prorow .name { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 16px; }
+  .prorow .line { display: flex; flex-wrap: wrap; gap: 2px 6px; font-size: 14px; color: var(--muted); }
+  .prorow .line .star { color: var(--ink); }
+  .prolist > * + * { border-top: 1px solid var(--line); }
+
+  /* ---------- Live order bar ---------- */
+  .livebar {
+    position: fixed; z-index: 29; left: 12px; right: 12px; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 12px);
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--radius);
+    background: var(--ink); color: #fff; box-shadow: var(--shadow);
+  }
+  .livebar small { display: block; opacity: .7; }
+  .livebar .pulse { width: 10px; height: 10px; border-radius: 50%; background: #3ddc84; animation: pulse 1.6s infinite; flex: none; }
+  body.immersive .livebar { display: none; }
+  @keyframes pulse { from { box-shadow: 0 0 0 0 rgba(61, 220, 132, .6); } to { box-shadow: 0 0 0 10px rgba(61, 220, 132, 0); } }
+
+  .segs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; }
+  .segs i { height: 5px; border-radius: 999px; background: var(--line); overflow: hidden; position: relative; }
+  .segs i.done { background: var(--ink); }
+  .segs i.cur::after { content: ""; position: absolute; inset: 0; width: 50%; background: var(--ink); border-radius: inherit; animation: slide 1.4s ease-in-out infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(200%); } }
+
+  /* ---------- Professional ---------- */
+  .cover-lg { height: 132px; margin: -16px -16px 0; background: var(--tile); display: grid; place-items: center; color: #cfcfcf; position: relative; }
+  .cover-lg .round { position: absolute; left: 12px; top: 12px; }
+  .pro-head { margin-top: -42px; position: relative; }
+  .pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+  .pills > div { background: var(--tile); border-radius: 12px; padding: 10px 6px; text-align: center; }
+  .pills b { display: flex; justify-content: center; font-size: 16px; }
+  .pills span { font-size: 12px; color: var(--muted); }
+  .svc { display: flex; align-items: center; gap: 14px; padding: 16px 0; width: 100%; text-align: left; }
+  .svc .add { width: 36px; height: 36px; border-radius: 50%; background: var(--tile); display: grid; place-items: center; flex: none; transition: background .15s; }
+  .svc.on .add { background: var(--ink); color: #fff; }
+  .bars { display: grid; gap: 4px; flex: 1; }
+  .bars div { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .bars i { flex: 1; height: 4px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .bars i::after { content: ""; display: block; height: 100%; width: var(--w); background: var(--ink); }
+  .review { padding: 14px 0; }
+
+  .cartbar { position: fixed; z-index: 31; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line); }
+  .cartbar .btn { max-width: 560px; margin: 0 auto; }
+  .cartbar .count { background: rgba(255, 255, 255, .2); border-radius: 6px; padding: 1px 8px; font-size: 14px; }
+
+  /* ---------- Checkout ---------- */
+  .narrow { max-width: 620px; margin: 0 auto; }
+  .seg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--tile); padding: 4px; border-radius: 12px; }
+  .seg2 button { min-height: 44px; border-radius: 9px; font-weight: 700; }
+  .seg2 button.on { background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .12); }
+  .radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #c4c4c4; flex: none; }
+  .on > .radio { border: 7px solid var(--ink); }
+  .sum > div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; }
+  .sum .total { font-weight: 800; font-size: 18px; border-top: 1px solid var(--line); margin-top: 8px; padding-top: 14px; }
+
+  /* ---------- Tracking ---------- */
+  .trk-map { position: sticky; top: 0; height: 46vh; height: 46dvh; background: #eef0f2; z-index: 1; }
+  .trk-map svg { width: 100%; height: 100%; display: block; }
+  .trk-map .round { position: absolute; left: 12px; top: 12px; }
+  .trk-sheet {
+    position: relative; z-index: 2; margin-top: -22px; background: var(--bg); border-radius: 22px 22px 0 0;
+    padding: 26px 16px 40px; box-shadow: 0 -10px 30px rgba(0, 0, 0, .10); min-height: 60vh;
+  }
+  .trk-sheet::before { content: ""; position: absolute; top: 9px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 999px; background: #d4d4d4; }
+  .eta { font-size: 30px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+  .pin { display: flex; gap: 6px; }
+  .pin b { width: 34px; height: 42px; border-radius: 8px; background: var(--tile); display: grid; place-items: center; font-size: 20px; }
+  .plate { display: inline-block; border: 1.5px solid var(--ink); border-radius: 6px; padding: 0 6px; font-weight: 800; font-size: 13px; letter-spacing: .04em; }
+  .steps { list-style: none; margin: 0; padding: 0; }
+  .steps li { position: relative; padding: 0 0 20px 30px; color: #a3a3a3; }
+  .steps li:last-child { padding-bottom: 0; }
+  .steps li::before { content: ""; position: absolute; left: 3px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #d4d4d4; z-index: 1; }
+  .steps li::after { content: ""; position: absolute; left: 8px; top: 16px; bottom: -4px; width: 2px; background: var(--line); }
+  .steps li:last-child::after { display: none; }
+  .steps li.done { color: var(--ink); }
+  .steps li.done::before, .steps li.done::after { background: var(--ink); }
+  .steps li.cur { color: var(--ink); font-weight: 700; }
+  .steps li.cur::before { background: var(--accent); box-shadow: 0 0 0 5px var(--accent-soft); }
+  .steps time { float: right; font-weight: 400; font-size: 13px; color: var(--muted); }
+  .demo { border: 1.5px dashed #cfcfcf; border-radius: var(--radius); padding: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 24px; }
+  .demo span { flex: 1; min-width: 150px; font-size: 12px; color: var(--muted); }
+  #worker { transition: transform .5s linear; }
+  .radar { animation: radar 1.8s ease-out infinite; transform-origin: center; transform-box: fill-box; }
+  .radar.d2 { animation-delay: .9s; }
+  @keyframes radar { from { transform: scale(.3); opacity: .5; } to { transform: scale(1); opacity: 0; } }
+
+  /* ---------- Rating ---------- */
+  .rate { text-align: center; }
+  .rate .avatar { margin: 0 auto 14px; border: 0; }
+  .starinput { display: flex; justify-content: center; gap: 4px; margin: 24px 0 8px; }
+  .starinput button { padding: 4px; color: #dcdcdc; transition: transform .1s; }
+  .starinput button:active { transform: scale(.9); }
+  .starinput button .ic { fill: currentColor; }
+  .starinput button.on { color: var(--ink); }
+  .ratelabel { min-height: 24px; font-weight: 700; font-size: 17px; }
+  .rate .wrap { justify-content: center; }
+  .rate h3 { margin: 28px 0 12px; }
+
+  /* ---------- Account ---------- */
+  .quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .quick a { background: var(--tile); border-radius: var(--radius); padding: 18px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+  .quick a:hover { background: var(--tile-hover); }
+
+  /* ---------- Sheet / toast ---------- */
+  .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .45); display: none; align-items: flex-end; justify-content: center; }
+  .overlay.open { display: flex; }
+  .modal { width: 100%; max-width: 520px; background: var(--bg); border-radius: 22px 22px 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); animation: up .22s ease-out; max-height: 88vh; overflow: auto; }
+  .modal header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  @keyframes up { from { transform: translateY(40px); opacity: 0; } }
+  .toast { position: fixed; left: 50%; top: 16px; transform: translate(-50%, -20px); z-index: 60; background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 12px; font-weight: 600; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100vw - 32px); box-shadow: var(--shadow); }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------- Breakpoints ---------- */
+  @media (min-width: 640px) {
+    .cats { grid-template-columns: repeat(6, 1fr); gap: 14px; }
+    .cat { font-size: 14px; }
+    .prolist { display: grid; grid-template-columns: 1fr 1fr; column-gap: 32px; }
+    .prolist > *:nth-child(2) { border-top: 0; }
+    .cover-lg { margin: 0; border-radius: var(--radius); }
+    .pro-head { padding: 0 16px; }
+    .overlay { align-items: center; }
+    .modal { border-radius: 22px; }
+  }
+  @media (min-width: 900px) {
+    h1 { font-size: 36px; }
+    .topbar-inner { height: 64px; padding: 0 24px; gap: 20px; }
+    .topnav { display: flex; }
+    .addr { flex: none; max-width: 280px; margin-left: auto; background: var(--tile); padding: 8px 14px; border-radius: 999px; }
+    .tabbar { display: none; }
+    .container, body.immersive .container { padding: 32px 24px 96px; }
+    .hscroll { margin: 0; padding: 0 0 4px; }
+    .hscroll > * { scroll-margin-left: 0; }
+    .divider { margin: 24px 0; height: 1px; background: var(--line); }
+    .cover-lg { margin: 0; border-radius: var(--radius); }
+    .pro-head { padding: 0 16px; }
+    .livebar { left: auto; right: 24px; bottom: 24px; width: 380px; }
+    .cartbar { background: none; border: 0; pointer-events: none; padding-bottom: 24px; }
+    .cartbar .btn { pointer-events: auto; box-shadow: var(--shadow); }
+    .trk { display: flex; height: calc(100vh - 65px); }
+    .trk-map { flex: 1; height: auto; position: relative; }
+    .trk-map .round { display: none; }
+    .trk-sheet { order: -1; width: 440px; flex: none; margin: 0; border-radius: 0; box-shadow: none; border-right: 1px solid var(--line); overflow: auto; padding: 28px 24px; min-height: 0; }
+    .trk-sheet::before { display: none; }
+    .toast { top: 80px; }
+  }
+  @media (max-width: 899px) { body[data-route="seguimiento"] .topbar { display: none; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#/">Trabaj<span>AR</span></a>
+    <nav class="topnav" aria-label="Principal">
+      <a href="#/" data-nav="home">Inicio</a>
+      <a href="#/buscar" data-nav="buscar">Buscar</a>
+      <a href="#/actividad" data-nav="actividad">Actividad</a>
+    </nav>
+    <button class="addr" data-action="addr-sheet" id="addrBtn" aria-label="Cambiar domicilio"></button>
+    <a class="avatar sm" href="#/cuenta" aria-label="Cuenta">AD</a>
+  </div>
+</header>
+
+<main id="view"></main>
+<div id="live"></div>
+<nav class="tabbar" aria-label="Principal" id="tabbar"></nav>
+<div class="overlay" id="overlay" data-action="close-sheet"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------- Icons ---------- */
+const ICONS = {
+  home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  list: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  star: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>',
+  pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
+  phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  back: '<path d="M19 12H5M12 19l-7-7 7-7"/>',
+  next: '<path d="m9 18 6-6-6-6"/>',
+  down: '<path d="m6 9 6 6 6-6"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+  card: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>',
+  share: '<path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/>',
+  sliders: '<path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h8M16 18h4"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="14" cy="18" r="2"/>',
+  repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="m7 22-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>',
+  van: '<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+  // Trades
+  wall: '<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9.33h18M3 14.67h18M12 4v5.33M8 9.33v5.34M16 9.33v5.34M12 14.67V20"/>',
+  hammer: '<path d="m15 12-8.5 8.5a2.12 2.12 0 0 1-3-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/>',
+  drop: '<path d="M12 2.7s6 6.1 6 11a6 6 0 0 1-12 0c0-4.9 6-11 6-11z"/>',
+  flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+  roller: '<rect x="3" y="3" width="14" height="6" rx="1.5"/><path d="M17 6h3v6h-8v3"/><rect x="10.5" y="15" width="3" height="6" rx="1"/>',
+  key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
+  snow: '<path d="M12 2v20M2 12h20M5 5l14 14M19 5 5 19"/>',
+  leaf: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+  roof: '<path d="M2 12 12 4l10 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+  wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'
+};
+const icon = (name, size = 20, cls = '') =>
+  `<svg class="ic ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+
+/* ---------- Mock data ---------- */
+const CATEGORIES = [
+  { id: 'albanileria', name: 'Albañilería', icon: 'wall' },
+  { id: 'carpinteria', name: 'Carpintería', icon: 'hammer' },
+  { id: 'plomeria', name: 'Plomería', icon: 'drop' },
+  { id: 'gasista', name: 'Gasista', icon: 'flame' },
+  { id: 'electricidad', name: 'Electricidad', icon: 'zap' },
+  { id: 'pintura', name: 'Pintura', icon: 'roller' },
+  { id: 'cerrajeria', name: 'Cerrajería', icon: 'key' },
+  { id: 'climatizacion', name: 'Climatización', icon: 'snow' },
+  { id: 'jardineria', name: 'Jardinería', icon: 'leaf' },
+  { id: 'techista', name: 'Techista', icon: 'roof' },
+  { id: 'herreria', name: 'Herrería', icon: 'wrench' }
+];
+
+const PROS = [
+  { id: 1, name: 'Martín Sosa', cat: 'plomeria', rating: 4.9, reviews: 214, jobs: 380, years: 12, km: 1.2, price: 18000, verified: true, available: true,
+    bio: 'Plomero matriculado. Reparaciones urgentes, instalaciones sanitarias y destapaciones.',
+    services: [['Reparación de pérdidas de agua', 22000], ['Destapación de cañerías', 28000], ['Instalación de grifería', 25000]] },
+  { id: 2, name: 'Carla Benítez', cat: 'electricidad', rating: 4.8, reviews: 167, jobs: 290, years: 9, km: 2.4, price: 20000, verified: true, available: true,
+    bio: 'Electricista matriculada. Tableros, cableado y puesta a tierra en viviendas y comercios.',
+    services: [['Revisión de tablero eléctrico', 24000], ['Instalación de luminarias', 18000], ['Cableado de tomacorrientes', 21000]] },
+  { id: 3, name: 'Jorge Ramírez', cat: 'albanileria', rating: 4.7, reviews: 98, jobs: 140, years: 20, km: 3.1, price: 25000, verified: true, available: false,
+    bio: 'Maestro mayor de obra. Refacciones, revoques, contrapisos y colocación de cerámicos.',
+    services: [['Colocación de cerámicos (m²)', 15000], ['Revoque fino y grueso (m²)', 12000], ['Reparación de humedad en paredes', 45000]] },
+  { id: 4, name: 'Lucía Fernández', cat: 'carpinteria', rating: 4.9, reviews: 121, jobs: 175, years: 8, km: 4.0, price: 22000, verified: true, available: true,
+    bio: 'Carpintería a medida. Placares, muebles de cocina y reparación de aberturas.',
+    services: [['Ajuste de puertas y ventanas', 20000], ['Mueble a medida', 0], ['Colocación de estantes', 16000]] },
+  { id: 5, name: 'Diego Acosta', cat: 'gasista', rating: 4.8, reviews: 143, jobs: 260, years: 15, km: 2.8, price: 26000, verified: true, available: true,
+    bio: 'Gasista matriculado. Instalación y service de termotanques, calefones y estufas.',
+    services: [['Instalación de termotanque', 48000], ['Detección de pérdidas de gas', 30000], ['Service de calefón', 27000]] },
+  { id: 6, name: 'Sofía Méndez', cat: 'pintura', rating: 4.6, reviews: 76, jobs: 110, years: 6, km: 5.2, price: 16000, verified: false, available: true,
+    bio: 'Pintura de interiores y exteriores. Trabajo prolijo, con protección de muebles y pisos.',
+    services: [['Pintura de ambiente', 60000], ['Impermeabilización de techo', 85000], ['Enduido y lijado (m²)', 6000]] },
+  { id: 7, name: 'Raúl Giménez', cat: 'cerrajeria', rating: 4.7, reviews: 189, jobs: 420, years: 18, km: 0.9, price: 15000, verified: true, available: true,
+    bio: 'Cerrajería las 24 horas. Apertura de puertas, cambio de combinación y cerraduras de seguridad.',
+    services: [['Apertura de puerta', 20000], ['Cambio de cerradura', 32000], ['Copia de llaves', 5000]] },
+  { id: 8, name: 'Nicolás Vera', cat: 'plomeria', rating: 4.5, reviews: 54, jobs: 80, years: 4, km: 3.6, price: 15000, verified: false, available: false,
+    bio: 'Plomería general y mantenimiento de tanques de agua.',
+    services: [['Limpieza de tanque de agua', 35000], ['Reparación de pérdidas de agua', 19000], ['Cambio de flotante', 14000]] },
+  { id: 9, name: 'Paula Ríos', cat: 'climatizacion', rating: 4.8, reviews: 132, jobs: 210, years: 10, km: 4.4, price: 24000, verified: true, available: true,
+    bio: 'Instalación y mantenimiento de equipos de aire acondicionado split.',
+    services: [['Instalación de aire acondicionado', 90000], ['Limpieza y service', 32000], ['Carga de gas', 40000]] },
+  { id: 10, name: 'Hernán Castro', cat: 'jardineria', rating: 4.6, reviews: 61, jobs: 95, years: 7, km: 6.0, price: 14000, verified: false, available: true,
+    bio: 'Mantenimiento de jardines, poda y diseño de canteros.',
+    services: [['Corte de césped', 14000], ['Poda de árboles', 30000], ['Diseño de canteros', 42000]] },
+  { id: 11, name: 'Oscar Paz', cat: 'techista', rating: 4.7, reviews: 88, jobs: 130, years: 16, km: 5.5, price: 23000, verified: true, available: true,
+    bio: 'Reparación de techos de chapa, tejas y membranas. Zinguería en general.',
+    services: [['Reparación de goteras', 38000], ['Colocación de membrana (m²)', 9000], ['Limpieza de canaletas', 20000]] },
+  { id: 12, name: 'Emilia Duarte', cat: 'herreria', rating: 4.8, reviews: 57, jobs: 90, years: 11, km: 3.9, price: 21000, verified: true, available: false,
+    bio: 'Rejas, portones y estructuras a medida. Soldadura a domicilio.',
+    services: [['Reparación de portón', 34000], ['Reja a medida', 0], ['Soldadura a domicilio', 26000]] }
+];
+
+const REVIEWS = [
+  { author: 'Valeria G.', stars: 5, when: 'Hace 3 días', text: 'Llegó puntual, explicó el problema y dejó todo limpio. Muy recomendable.' },
+  { author: 'Federico L.', stars: 5, when: 'Hace 1 semana', text: 'Resolvió en una hora algo que arrastrábamos hace meses. Precio justo.' },
+  { author: 'Marina T.', stars: 4, when: 'Hace 2 semanas', text: 'Buen trabajo y buen trato. Se demoró un poco en llegar, pero avisó.' }
+];
+
+const ADDRESSES = [{ label: 'Casa', text: 'Av. Belgrano 1450, 3.º B' }, { label: 'Trabajo', text: 'San Martín 820, of. 4' }];
+const PAYMENTS = ['Efectivo', 'Tarjeta terminada en 4821', 'Billetera virtual'];
+const SORTS = { rating: 'Mejor puntuados', km: 'Más cercanos', price: 'Menor precio' };
+const VEHICLES = ['Utilitario blanco', 'Utilitario gris', 'Camioneta blanca', 'Moto negra'];
+const STEPS = ['Solicitud enviada', 'Confirmado por el profesional', 'En camino', 'Llegó al domicilio', 'Trabajo en curso', 'Trabajo finalizado'];
+const RATE_LABELS = ['', 'Malo', 'Regular', 'Bueno', 'Muy bueno', 'Excelente'];
+const RATE_TAGS = ['Puntualidad', 'Prolijidad', 'Buen trato', 'Precio justo', 'Explicó el trabajo', 'Dejó todo limpio'];
+const TIPS = [0, 1000, 2000, 3000];
+const APP_FEE = 1500;
+const TRIP_MINUTES = 12;
+const TRIP_SECONDS = 40; // demo duration of the simulated trip
+
+const state = {
+  addr: 0,
+  filters: { q: '', cat: '', sort: 'rating', available: false, verified: false },
+  cart: { proId: null, items: [] },
+  checkout: { when: 'now', pay: 0 },
+  active: { proId: 1, items: [['Reparación de pérdidas de agua', 22000]], total: 23500, address: ADDRESSES[0].text, pay: 0, step: 2, progress: 0.25, times: ['14:02', '14:05', '14:10'], pin: '4821' },
+  jobs: [
+    { id: 'j2', proId: 2, title: 'Revisión de tablero eléctrico', date: '28 sep', price: 25500, rating: null },
+    { id: 'j1', proId: 7, title: 'Cambio de cerradura', date: '12 sep', price: 33500, rating: 5 },
+    { id: 'j0', proId: 5, title: 'Service de calefón', date: '30 ago', price: 28500, rating: 4 }
+  ]
+};
+
+/* ---------- Helpers ---------- */
+const $ = (sel) => document.querySelector(sel);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const money = (n) => (n ? '$' + n.toLocaleString('es-AR') : 'A presupuestar');
+const comma = (n) => String(n).replace('.', ',');
+const proById = (id) => PROS.find((p) => p.id === Number(id));
+const catById = (id) => CATEGORIES.find((c) => c.id === id);
+const initials = (name) => name.split(' ').map((w) => w[0]).join('').slice(0, 2);
+const firstName = (name) => name.split(' ')[0];
+const nowTime = () => new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+const eta = (p) => { const m = Math.round(p.km * 4 + 8); return `${m}–${m + 10} min`; };
+const vehicle = (p) => VEHICLES[p.id % VEHICLES.length];
+const plate = (p) => `AE ${400 + p.id * 37} KD`;
+const star = (p) => `<span class="star">${icon('star', 13)}${comma(p.rating.toFixed(1))}</span>`;
+const starsRow = (n, size = 14) => `<span class="star" aria-label="${n} de 5" style="gap:1px">${[1, 2, 3, 4, 5].map((i) => `<span style="color:${i <= n ? 'inherit' : '#dcdcdc'}">${icon('star', size)}</span>`).join('')}</span>`;
+const pageHead = (title) => `<div class="pagehead"><button class="round" data-action="back" aria-label="Volver">${icon('back')}</button><h2>${title}</h2></div>`;
+const segs = (step) => `<div class="segs">${STEPS.map((_, i) => `<i class="${i < step || step === 5 ? 'done' : i === step ? 'cur' : ''}"></i>`).join('')}</div>`;
+const tripMins = () => Math.max(1, Math.ceil(TRIP_MINUTES * (1 - state.active.progress)));
+const currentRoute = () => (location.hash.slice(1) || '/').split('/')[1] || '';
+
+let toastTimer;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+function openSheet(title, body) {
+  $('#modal').innerHTML = `<header><h2>${title}</h2><button class="round" data-action="close-sheet" data-force aria-label="Cerrar">${icon('x')}</button></header>${body}`;
+  $('#overlay').classList.add('open');
+}
+const closeSheet = () => $('#overlay').classList.remove('open');
+
+/* ---------- Cards ---------- */
+function proTile(p) {
+  return `<a class="tilecard" href="#/pro/${p.id}">
+    <span class="cover">${icon(catById(p.cat).icon, 44)}<span class="avatar">${initials(p.name)}</span><span class="tag">${icon('clock', 12)}${eta(p)}</span></span>
+    <span class="name"><span class="ellipsis">${p.name}</span>${star(p)}</span>
+    <span class="muted small">${catById(p.cat).name} · ${comma(p.km)} km</span>
+    <span class="small">Visita desde <b>${money(p.price)}</b></span>
+  </a>`;
+}
+
+function proRow(p) {
+  return `<a class="prorow" href="#/pro/${p.id}">
+    <span class="thumb"><span class="avatar">${initials(p.name)}</span></span>
+    <span class="grow">
+      <span class="name"><span class="ellipsis">${p.name}</span>${p.verified ? icon('shield', 16) : ''}</span>
+      <span class="line">${star(p)}<span>(${p.reviews})</span><span>· ${catById(p.cat).name}</span></span>
+      <span class="line"><span>${p.available ? eta(p) : 'Mañana'}</span><span>· Visita ${money(p.price)}</span></span>
+      ${p.available ? '<span class="tag ok" style="margin-top:6px">Disponible ahora</span>' : ''}
+    </span>
+  </a>`;
+}
+
+/* ---------- Views ---------- */
+function viewHome() {
+  const available = PROS.filter((p) => p.available).sort((a, b) => a.km - b.km).slice(0, 6);
+  const top = [...PROS].sort((x, y) => y.rating - x.rating || y.reviews - x.reviews).slice(0, 6);
+  return `
+    <form class="searchpill" data-form="home-search" role="search">
+      ${icon('search', 22)}
+      <input class="input" name="q" type="search" placeholder="¿Qué hay que arreglar?" aria-label="Buscar un oficio o un servicio" autocomplete="off">
+    </form>
+
+    <section class="section" style="margin-top:22px">
+      <div class="cats">
+        ${CATEGORIES.map((c) => `<a class="cat" href="#/buscar" data-action="cat" data-cat="${c.id}"><i>${icon(c.icon, 28)}</i>${c.name}</a>`).join('')}
+        <span class="cat soon"><i>${icon('plus', 24)}</i>Próximamente</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="hscroll">
+        <div class="promo dark"><div><b>Urgencias las 24 horas</b><p>Cerrajería, plomería y gas en menos de 30 minutos.</p></div><a class="btn sm" href="#/buscar" data-action="urgent">Ver disponibles</a></div>
+        <div class="promo accent"><div><b>Primera visita sin cargo</b><p>Con el código HOLA en el primer pedido.</p></div><button class="btn sm" data-action="say" data-msg="Código HOLA copiado">Copiar código</button></div>
+        <div class="promo"><div><b>Profesionales verificados</b><p>Identidad y matrícula revisadas antes de publicar.</p></div><a class="btn sm" href="#/buscar" data-action="only-verified">Explorar</a></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>Volver a pedir</h2></div>
+      <div class="hscroll">
+        ${state.jobs.map((j) => { const p = proById(j.proId); return `<a class="again" href="#/pro/${p.id}"><i>${icon(catById(p.cat).icon, 22)}</i><span class="grow"><b class="ellipsis" style="display:block">${esc(j.title)}</b><span class="small muted">${p.name}</span></span>${icon('repeat', 18)}</a>`; }).join('')}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>Disponibles ahora</h2><a href="#/buscar" data-action="urgent">Ver todos${icon('next', 16)}</a></div>
+      <div class="hscroll">${available.map(proTile).join('')}</div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>Mejor puntuados</h2><a href="#/buscar" data-action="cat" data-cat="">Ver todos${icon('next', 16)}</a></div>
+      <div class="prolist">${top.map(proRow).join('')}</div>
+    </section>`;
+}
+
+function viewSearch() {
+  return `
+    <label class="searchpill">
+      ${icon('search', 22)}
+      <input class="input" id="q" type="search" value="${esc(state.filters.q)}" placeholder="Oficio, servicio o profesional" aria-label="Buscar" autocomplete="off">
+    </label>
+    <div class="hscroll" id="chips" style="margin-top:14px"></div>
+    <p class="muted small" id="count" style="margin:16px 0 0"></p>
+    <div class="prolist" id="results"></div>`;
+}
+
+function renderSearchBody() {
+  const f = state.filters;
+  $('#chips').innerHTML = `
+    <button class="chip" data-action="sort-sheet">${icon('sliders', 16)}${SORTS[f.sort]}${icon('down', 14)}</button>
+    <button class="chip ${f.available ? 'on' : ''}" data-action="toggle" data-key="available" aria-pressed="${f.available}">Disponible ahora</button>
+    <button class="chip ${f.verified ? 'on' : ''}" data-action="toggle" data-key="verified" aria-pressed="${f.verified}">Verificados</button>
+    ${CATEGORIES.map((c) => `<button class="chip ${f.cat === c.id ? 'on' : ''}" data-action="filter-cat" data-cat="${c.id}" aria-pressed="${f.cat === c.id}">${c.name}</button>`).join('')}`;
+  const tokens = norm(f.q).split(/\s+/).filter(Boolean);
+  const list = PROS.filter((p) => {
+    if (f.cat && p.cat !== f.cat) return false;
+    if (f.available && !p.available) return false;
+    if (f.verified && !p.verified) return false;
+    const hay = norm([p.name, catById(p.cat).name, ...p.services.map((s) => s[0])].join(' '));
+    return tokens.every((t) => hay.includes(t));
+  }).sort((a, b) => (f.sort === 'rating' ? b.rating - a.rating : a[f.sort] - b[f.sort]));
+  $('#count').textContent = `${list.length} ${list.length === 1 ? 'profesional' : 'profesionales'}${f.cat ? ' en ' + catById(f.cat).name : ''}`;
+  $('#results').innerHTML = list.length
+    ? list.map(proRow).join('')
+    : `<div class="empty" style="grid-column:1/-1"><h2>Sin resultados</h2><p>Probar con otro término o quitar filtros.</p><button class="btn light" data-action="clear-filters">Quitar filtros</button></div>`;
+}
+
+function cartTotal() {
+  const p = proById(state.cart.proId);
+  return p ? state.cart.items.reduce((sum, i) => sum + p.services[i][1], 0) : 0;
+}
+
+function cartBar(p) {
+  const n = state.cart.proId === p.id ? state.cart.items.length : 0;
+  return n
+    ? `<a class="btn block" href="#/checkout"><span class="count">${n}</span>Continuar<span class="right">${money(cartTotal()) }</span></a>`
+    : `<button class="btn block" disabled>Elegir al menos un servicio</button>`;
+}
+
+function viewPro(id) {
+  const p = proById(id);
+  if (!p) return notFound();
+  const cat = catById(p.cat);
+  const picked = state.cart.proId === p.id ? state.cart.items : [];
+  return `
+    <div class="narrow">
+      <div class="cover-lg">${icon(cat.icon, 64)}<button class="round float" data-action="back" aria-label="Volver">${icon('back')}</button></div>
+      <div class="pro-head">
+        <span class="avatar lg">${initials(p.name)}</span>
+        <h1 style="margin-top:10px;font-size:26px;display:flex;align-items:center;gap:8px">${p.name}${p.verified ? icon('shield', 22) : ''}</h1>
+        <p class="muted">${cat.name} · ${p.years} años de oficio · ${p.jobs} trabajos</p>
+        <div class="pills">
+          <div><b class="star">${icon('star', 14)}${comma(p.rating.toFixed(1))}</b><span>${p.reviews} opiniones</span></div>
+          <div><b>${p.available ? eta(p).replace(' min', '') : '—'}</b><span>${p.available ? 'min de llegada' : 'disponible mañana'}</span></div>
+          <div><b>${money(p.price)}</b><span>visita</span></div>
+        </div>
+        <p style="margin-top:16px">${p.bio}</p>
+      </div>
+      <div class="divider"></div>
+      <h2>Servicios</h2>
+      <div class="rowlist" id="services">
+        ${p.services.map(([n, v], i) => `<button class="svc ${picked.includes(i) ? 'on' : ''}" data-action="pick" data-pro="${p.id}" data-i="${i}" aria-pressed="${picked.includes(i)}">
+          <span class="grow"><b>${n}</b><div class="muted">${v ? 'Desde ' + money(v) : 'A presupuestar en la visita'}</div></span>
+          <span class="add">${icon(picked.includes(i) ? 'check' : 'plus', 18)}</span></button>`).join('')}
+      </div>
+      <div class="divider"></div>
+      <h2>Opiniones</h2>
+      <div style="display:flex;align-items:center;gap:20px;margin:14px 0 4px">
+        <div style="text-align:center"><div style="font-size:40px;font-weight:800;line-height:1">${comma(p.rating.toFixed(1))}</div>${starsRow(Math.round(p.rating), 12)}</div>
+        <div class="bars">${[[5, 82], [4, 12], [3, 4], [2, 1], [1, 1]].map(([s, w]) => `<div>${s}<i style="--w:${w}%"></i></div>`).join('')}</div>
+      </div>
+      <div class="rowlist">
+        ${REVIEWS.map((r) => `<div class="review"><div style="display:flex;justify-content:space-between;align-items:center"><b>${r.author}</b><span class="small muted">${r.when}</span></div>${starsRow(r.stars, 12)}<p class="muted" style="margin-top:4px">${r.text}</p></div>`).join('')}
+      </div>
+    </div>
+    <div class="cartbar" id="cartbar">${cartBar(p)}</div>`;
+}
+
+function viewCheckout() {
+  const p = proById(state.cart.proId);
+  if (!p || !state.cart.items.length) return `<div class="empty"><h2>No hay servicios elegidos</h2><p>Elegir un profesional y al menos un servicio para continuar.</p><a class="btn" href="#/buscar">Buscar profesionales</a></div>`;
+  const c = state.checkout;
+  const subtotal = cartTotal();
+  const hasQuote = state.cart.items.some((i) => !p.services[i][1]);
+  return `
+    <form class="narrow" data-form="order">
+      ${pageHead('Confirmar pedido')}
+      <div class="row" style="padding-top:0"><span class="avatar">${initials(p.name)}</span><span class="grow"><b>${p.name}</b><div class="muted small">${catById(p.cat).name} · ${star(p)}</div></span></div>
+
+      <div class="rowlist" style="border-top:1px solid var(--line)">
+        <button type="button" class="row" data-action="addr-sheet"><span class="round">${icon('pin')}</span><span class="grow"><b>${ADDRESSES[state.addr].label}</b><div class="muted small">${ADDRESSES[state.addr].text}</div></span>${icon('next', 18)}</button>
+      </div>
+
+      <div class="divider"></div>
+      <h3 style="margin-bottom:12px">¿Cuándo?</h3>
+      <div class="seg2" id="when">
+        <button type="button" class="${c.when === 'now' ? 'on' : ''}" data-action="when" data-v="now">Ahora</button>
+        <button type="button" class="${c.when === 'later' ? 'on' : ''}" data-action="when" data-v="later">Programar</button>
+      </div>
+      <p class="muted small" style="margin-top:10px" id="whenNote">${c.when === 'now' ? `Llegada estimada: ${p.available ? eta(p) : 'mañana por la mañana'}` : ''}</p>
+      <div class="hscroll" id="slots" style="margin-top:4px;${c.when === 'later' ? '' : 'display:none'}">
+        ${['Hoy 18:00', 'Mañana 9:00', 'Mañana 14:00', 'Sábado 10:00'].map((s, i) => `<button type="button" class="chip ${i ? '' : 'on'}" data-action="slot">${s}</button>`).join('')}
+      </div>
+
+      <div class="divider"></div>
+      <h3 style="margin-bottom:12px">Detalles para el profesional</h3>
+      <textarea class="input" name="notes" placeholder="Ejemplo: pierde agua la canilla de la cocina desde ayer. Timbre 3.º B."></textarea>
+      <button type="button" class="btn light sm" style="margin-top:10px" data-action="say" data-msg="Adjuntar fotos (demostración)">${icon('plus', 16)}Agregar fotos</button>
+
+      <div class="divider"></div>
+      <h3>Medio de pago</h3>
+      <div class="rowlist" id="pay">
+        ${PAYMENTS.map((m, i) => `<button type="button" class="row ${c.pay === i ? 'on' : ''}" data-action="pay" data-i="${i}" role="radio" aria-checked="${c.pay === i}">${icon('card')}<span class="grow">${m}</span><span class="radio"></span></button>`).join('')}
+      </div>
+
+      <div class="divider"></div>
+      <h3 style="margin-bottom:8px">Resumen</h3>
+      <div class="sum">
+        ${state.cart.items.map((i) => `<div><span>${p.services[i][0]}</span><span>${money(p.services[i][1])}</span></div>`).join('')}
+        <div><span class="muted">Tarifa de servicio</span><span>${money(APP_FEE)}</span></div>
+        <div class="total"><span>Total estimado</span><span>${money(subtotal + APP_FEE)}</span></div>
+      </div>
+      <p class="muted small" style="margin-top:8px">${hasQuote ? 'Incluye servicios a presupuestar: el profesional informa el valor antes de comenzar. ' : ''}El cobro se realiza al finalizar el trabajo.</p>
+
+      <div class="cartbar"><button class="btn block" type="submit">Pedir servicio<span class="right">${money(subtotal + APP_FEE)}</span></button></div>
+    </form>`;
+}
+
+function mapSvg() {
+  const blocks = [];
+  for (let j = 0; j < 5; j++) for (let i = 0; i < 7; i++) {
+    const park = (i === 4 && j === 3) || (i === 1 && j === 0);
+    blocks.push(`<rect x="${16 + i * 112}" y="${16 + j * 116.8}" width="96" height="100.8" rx="5" fill="${park ? '#d5ecd4' : '#e4e7ea'}"/>`);
+  }
+  const d = 'M120 124.8V358.4H456V241.6H680';
+  return `<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Mapa con el recorrido del profesional hasta el domicilio">
+    <rect width="800" height="600" fill="#fff"/>${blocks.join('')}
+    <path id="route" d="${d}" fill="none" stroke="#bdbdbd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path id="routeDone" d="${d}" fill="none" stroke="#0b0b0c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <g transform="translate(680 241.6)">
+      <g id="radar"><circle class="radar" r="90" fill="#0b0b0c"/><circle class="radar d2" r="90" fill="#0b0b0c"/></g>
+      <rect x="-13" y="-13" width="26" height="26" rx="5" fill="#0b0b0c"/><rect x="-4" y="-4" width="8" height="8" fill="#fff"/>
+    </g>
+    <g id="worker"><circle r="17" fill="#fff"/><circle r="13" fill="#e5430a"/><circle r="4.5" fill="#fff"/></g>
+  </svg>`;
+}
+
+function viewTracking() {
+  const a = state.active;
+  if (!a) return `<div class="container"><div class="empty"><h2>Sin pedidos en curso</h2><p>Al pedir un servicio, el seguimiento aparece en esta pantalla.</p><a class="btn" href="#/buscar">Buscar profesionales</a></div></div>`;
+  const p = proById(a.proId);
+  const name = firstName(p.name);
+  const [title, sub] = [
+    ['Buscando confirmación…', `${name} tiene unos minutos para aceptar el pedido.`],
+    [`${name} confirmó el pedido`, 'Se está preparando para salir.'],
+    [`Llega en <span data-eta></span>`, `${name} está en camino al domicilio.`],
+    [`${name} llegó`, 'Verificar el PIN antes de abrir la puerta.'],
+    ['Trabajo en curso', 'Se enviará un aviso cuando esté terminado.'],
+    ['Trabajo finalizado', 'Solo falta calificar el servicio.']
+  ][a.step];
+  return `
+    <div class="trk">
+      <div class="trk-map">${mapSvg()}<button class="round float" data-action="back" aria-label="Volver">${icon('back')}</button></div>
+      <div class="trk-sheet">
+        <p class="eta">${title}</p>
+        <p class="muted" style="margin:4px 0 16px">${sub}</p>
+        ${segs(a.step)}
+        ${a.step === 5 ? `<a class="btn block" style="margin-top:20px" href="#/calificar/active">Calificar a ${name}</a>` : ''}
+
+        <div class="row" style="margin-top:12px">
+          <a class="avatar" href="#/pro/${p.id}">${initials(p.name)}</a>
+          <span class="grow"><b>${p.name}</b> ${star(p)}<div class="small muted">${vehicle(p)} · <span class="plate">${plate(p)}</span></div></span>
+          <button class="round" data-action="say" data-msg="Chat con el profesional (demostración)" aria-label="Enviar mensaje">${icon('chat')}</button>
+          <button class="round" data-action="say" data-msg="Llamada al profesional (demostración)" aria-label="Llamar">${icon('phone')}</button>
+        </div>
+
+        ${a.step < 4 ? `<div class="row" style="border-top:1px solid var(--line)"><span class="grow"><b>PIN de seguridad</b><div class="small muted">Pedirlo al profesional al llegar.</div></span><span class="pin">${[...a.pin].map((d) => `<b>${d}</b>`).join('')}</span></div>` : ''}
+
+        <div class="wrap" style="margin-top:6px">
+          <button class="btn light sm" data-action="say" data-msg="Enlace de seguimiento copiado">${icon('share', 16)}Compartir seguimiento</button>
+          ${a.step < 2 ? `<button class="btn light sm" data-action="cancel-sheet">Cancelar pedido</button>` : ''}
+        </div>
+
+        <div class="divider"></div>
+        <h3 style="margin-bottom:16px">Estado del trabajo</h3>
+        <ol class="steps">
+          ${STEPS.map((s, i) => `<li class="${i < a.step || a.step === 5 ? 'done' : i === a.step ? 'cur' : ''}">${s}${a.times[i] ? `<time>${a.times[i]}</time>` : ''}</li>`).join('')}
+        </ol>
+
+        <div class="divider"></div>
+        <h3 style="margin-bottom:8px">Detalle del pedido</h3>
+        <div class="sum">
+          ${a.items.map(([n, v]) => `<div><span>${esc(n)}</span><span>${money(v)}</span></div>`).join('')}
+          <div><span class="muted">Domicilio</span><span style="text-align:right">${esc(a.address)}</span></div>
+          <div><span class="muted">Pago</span><span>${PAYMENTS[a.pay]}</span></div>
+          <div class="total"><span>Total estimado</span><span>${money(a.total)}</span></div>
+        </div>
+
+        <div class="demo">
+          <span>Controles de demostración: simulan los cambios de estado que enviaría el servidor.</span>
+          <button class="btn light sm" data-action="restart">Reiniciar</button>
+          <button class="btn sm" data-action="advance" ${a.step === 5 ? 'disabled' : ''}>Avanzar estado</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function viewRate(id) {
+  const job = id === 'active' ? state.active : state.jobs.find((j) => j.id === id);
+  if (!job) return notFound();
+  const p = proById(job.proId);
+  return `
+    <form class="narrow rate" data-form="rate" data-job="${id}" style="max-width:480px">
+      <div style="text-align:left">${pageHead('')}</div>
+      <span class="avatar lg">${initials(p.name)}</span>
+      <h1 style="font-size:26px">¿Cómo estuvo ${firstName(p.name)}?</h1>
+      <p class="muted" style="margin-top:6px">${esc(job.title || job.items[0][0])}</p>
+      <div class="starinput" role="radiogroup" aria-label="Puntuación">
+        ${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-action="star" data-n="${n}" role="radio" aria-checked="false" aria-label="${n} de 5: ${RATE_LABELS[n]}">${icon('star', 44)}</button>`).join('')}
+      </div>
+      <p class="ratelabel" id="rateLabel"><span class="muted" style="font-weight:400;font-size:15px">Tocar una estrella para puntuar</span></p>
+      <h3>¿Qué se destacó?</h3>
+      <div class="wrap">${RATE_TAGS.map((t) => `<button type="button" class="chip" data-action="tag" aria-pressed="false">${t}</button>`).join('')}</div>
+      <h3>Propina para ${firstName(p.name)}</h3>
+      <div class="wrap" id="tips">${TIPS.map((t, i) => `<button type="button" class="chip ${i ? '' : 'on'}" data-action="tip">${t ? money(t) : 'Sin propina'}</button>`).join('')}</div>
+      <textarea class="input" name="comment" placeholder="Comentario (opcional)" style="margin-top:28px;text-align:left"></textarea>
+      <div class="cartbar"><button class="btn block" type="submit" id="rateSubmit" disabled>Enviar calificación</button></div>
+    </form>`;
+}
+
+function viewActivity() {
+  const a = state.active;
+  const current = a ? (() => {
+    const p = proById(a.proId);
+    return `<a href="${a.step === 5 ? '#/calificar/active' : '#/seguimiento'}" style="display:block;background:var(--tile);border-radius:var(--radius);padding:16px">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px">
+        <span class="thumb">${icon(catById(p.cat).icon, 22)}</span>
+        <span class="grow"><b>${esc(a.items[0][0])}</b><div class="small muted">${p.name} · ${money(a.total)}</div></span>
+        ${icon('next', 18)}
+      </div>
+      ${segs(a.step)}
+      <p style="margin-top:10px;font-weight:700">${a.step === 5 ? 'Pendiente de calificación' : STEPS[a.step]}${a.step === 2 ? ' · <span data-eta></span>' : ''}</p>
+    </a>`;
+  })() : `<div style="background:var(--tile);border-radius:var(--radius);padding:20px;display:flex;align-items:center;gap:12px"><span class="grow"><b>No hay pedidos en curso</b><div class="small muted">Los pedidos activos aparecen acá.</div></span><a class="btn sm" href="#/buscar">Pedir</a></div>`;
+  return `
+    <h1>Actividad</h1>
+    <section class="section" style="margin-top:20px"><div class="section-head"><h2>En curso</h2></div>${current}</section>
+    <section class="section">
+      <div class="section-head"><h2>Anteriores</h2></div>
+      <div class="rowlist">
+        ${state.jobs.map((j) => {
+          const p = proById(j.proId);
+          return `<div class="row" style="align-items:flex-start">
+            <span class="thumb" style="background:var(--tile)">${icon(catById(p.cat).icon, 22)}</span>
+            <span class="grow"><b>${esc(j.title)}</b><div class="small muted">${p.name} · ${j.date} · ${money(j.price)}</div>
+              <div class="wrap" style="margin-top:10px;align-items:center">
+                ${j.rating ? starsRow(j.rating) : `<a class="btn sm" href="#/calificar/${j.id}">Calificar</a>`}
+                <a class="btn light sm" href="#/pro/${p.id}">${icon('repeat', 15)}Repetir</a>
+              </div></span>
+          </div>`;
+        }).join('')}
+      </div>
+    </section>`;
+}
+
+function viewAccount() {
+  const item = (ic, label, sub = '') => `<a class="row" href="#/cuenta" data-action="say" data-msg="Sección disponible próximamente">${icon(ic)}<span class="grow">${label}${sub ? `<div class="small muted">${sub}</div>` : ''}</span>${icon('next', 18)}</a>`;
+  return `
+    <div class="narrow">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <div><h1>Ana Domínguez</h1><span class="tag" style="margin-top:8px">${icon('star', 12)}4,9 como cliente</span></div>
+        <span class="avatar" style="width:64px;height:64px;font-size:20px">AD</span>
+      </div>
+      <div class="quick" style="margin-top:24px">
+        <a href="#/cuenta" data-action="say" data-msg="Sección disponible próximamente">${icon('help', 24)}Ayuda</a>
+        <a href="#/cuenta" data-action="say" data-msg="Sección disponible próximamente">${icon('card', 24)}Pagos</a>
+        <a href="#/actividad">${icon('list', 24)}Actividad</a>
+      </div>
+      <div class="promo" style="width:100%;min-height:0;margin-top:16px;flex-direction:row;align-items:center"><div><b style="font-size:16px">Ofrecer servicios como profesional</b><p>Publicar un oficio y recibir pedidos de la zona.</p></div>${icon('next')}</div>
+      <div class="rowlist" style="margin-top:12px">
+        ${item('pin', 'Domicilios', ADDRESSES.map((x) => x.label).join(' · '))}
+        ${item('bell', 'Notificaciones')}
+        ${item('shield', 'Privacidad y seguridad')}
+        ${item('user', 'Datos personales')}
+      </div>
+    </div>`;
+}
+
+const notFound = () => `<div class="empty"><h2>Pantalla no encontrada</h2><a class="btn" href="#/">Volver al inicio</a></div>`;
+
+/* ---------- Live order (simulation) ---------- */
+let tripTimer = null;
+let routeLen = 0;
+
+function paintLive() {
+  const a = state.active;
+  if (!a) return;
+  document.querySelectorAll('[data-eta]').forEach((el) => (el.textContent = `${tripMins()} min`));
+  const route = $('#route');
+  if (!route) return;
+  const pt = route.getPointAtLength(routeLen * a.progress);
+  $('#worker').style.transform = `translate(${pt.x}px, ${pt.y}px)`;
+  $('#worker').style.display = a.step >= 1 ? '' : 'none';
+  $('#radar').style.display = a.step === 0 ? '' : 'none';
+  route.style.display = $('#routeDone').style.display = a.step >= 1 ? '' : 'none';
+  $('#routeDone').style.strokeDashoffset = -routeLen * a.progress;
+}
+
+function initTracking() {
+  const route = $('#route');
+  if (!route) return;
+  routeLen = route.getTotalLength();
+  $('#routeDone').style.strokeDasharray = routeLen;
+  const worker = $('#worker');
+  worker.style.transition = 'none';
+  paintLive();
+  requestAnimationFrame(() => requestAnimationFrame(() => (worker.style.transition = '')));
+}
+
+function syncTimer() {
+  const running = state.active && state.active.step === 2;
+  if (running && !tripTimer) {
+    tripTimer = setInterval(() => {
+      const a = state.active;
+      a.progress = Math.min(1, a.progress + 0.5 / TRIP_SECONDS);
+      paintLive();
+      if (a.progress >= 1) setStep(3);
+    }, 500);
+  } else if (!running && tripTimer) {
+    clearInterval(tripTimer);
+    tripTimer = null;
+  }
+}
+
+function setStep(n) {
+  const a = state.active;
+  a.step = n;
+  a.times[n] = nowTime();
+  if (n < 2) a.progress = 0;
+  if (n >= 3) a.progress = 1;
+  syncTimer();
+  toast(STEPS[n]);
+  // Avoid wiping forms the user may be filling in on other screens.
+  if (['', 'seguimiento', 'actividad'].includes(currentRoute())) render();
+  else renderLiveBar();
+}
+
+function renderLiveBar() {
+  const a = state.active;
+  if (!a) return ($('#live').innerHTML = '');
+  const name = firstName(proById(a.proId).name);
+  const done = a.step === 5;
+  $('#live').innerHTML = `<a class="livebar" href="${done ? '#/calificar/active' : '#/seguimiento'}">
+    ${done ? icon('star') : '<i class="pulse"></i>'}
+    <span class="grow"><b>${done ? `Calificar a ${name}` : a.step === 2 ? `${name} llega en <span data-eta></span>` : STEPS[a.step]}</b><small class="ellipsis">${esc(a.items[0][0])}</small></span>
+    ${icon('next')}</a>`;
+  paintLive();
+}
+
+/* ---------- Router ---------- */
+const TABS = [['home', '#/', 'Inicio', 'home'], ['buscar', '#/buscar', 'Buscar', 'search'], ['actividad', '#/actividad', 'Actividad', 'list'], ['cuenta', '#/cuenta', 'Cuenta', 'user']];
+const NAV_OF = { '': 'home', buscar: 'buscar', pro: 'buscar', checkout: 'buscar', seguimiento: 'actividad', calificar: 'actividad', actividad: 'actividad', cuenta: 'cuenta' };
+const IMMERSIVE = ['pro', 'checkout', 'seguimiento', 'calificar'];
+
+function render() {
+  const [, route = '', param] = (location.hash.slice(1) || '/').split('/');
+  const views = { '': viewHome, buscar: viewSearch, pro: viewPro, checkout: viewCheckout, seguimiento: viewTracking, calificar: viewRate, actividad: viewActivity, cuenta: viewAccount };
+  const view = $('#view');
+  view.className = route === 'seguimiento' ? '' : 'container';
+  view.innerHTML = (views[route] || notFound)(param);
+  document.body.dataset.route = route;
+  document.body.classList.toggle('immersive', IMMERSIVE.includes(route));
+  document.querySelectorAll('[data-nav]').forEach((el) => el.classList.toggle('active', el.dataset.nav === NAV_OF[route]));
+  $('#addrBtn').innerHTML = `${icon('pin', 18)}<span class="ellipsis">${ADDRESSES[state.addr].text}</span>${icon('down', 16)}`;
+  if (route === 'buscar') renderSearchBody();
+  if (route === 'seguimiento') initTracking();
+  renderLiveBar();
+}
+
+$('#tabbar').innerHTML = TABS.map(([id, href, label, ic]) => `<a href="${href}" data-nav="${id}">${icon(ic, 23)}${label}</a>`).join('');
+window.addEventListener('hashchange', () => { closeSheet(); render(); window.scrollTo(0, 0); });
+
+/* ---------- Events ---------- */
+const single = (container, el) => document.querySelectorAll(`${container} > *`).forEach((c) => c.classList.toggle('on', c === el));
+const resetFilters = (patch) => (state.filters = { q: '', cat: '', sort: 'rating', available: false, verified: false, ...patch });
+
+const actions = {
+  back: () => (history.length > 1 ? history.back() : (location.hash = '#/')),
+  say: (el, e) => { if (el.tagName === 'A') e.preventDefault(); toast(el.dataset.msg); },
+  'close-sheet': (el, e) => { if (e.target === el || el.hasAttribute('data-force')) closeSheet(); },
+
+  cat: (el) => resetFilters({ cat: el.dataset.cat }),
+  urgent: () => resetFilters({ available: true, sort: 'km' }),
+  'only-verified': () => resetFilters({ verified: true }),
+  'clear-filters': () => { resetFilters(); $('#q').value = ''; renderSearchBody(); },
+  'filter-cat': (el) => { state.filters.cat = state.filters.cat === el.dataset.cat ? '' : el.dataset.cat; renderSearchBody(); },
+  toggle: (el) => { state.filters[el.dataset.key] = !state.filters[el.dataset.key]; renderSearchBody(); },
+  'sort-sheet': () => openSheet('Ordenar por', `<div class="rowlist">${Object.entries(SORTS).map(([k, v]) => `<button class="row ${state.filters.sort === k ? 'on' : ''}" data-action="set-sort" data-v="${k}"><span class="grow">${v}</span><span class="radio"></span></button>`).join('')}</div>`),
+  'set-sort': (el) => { state.filters.sort = el.dataset.v; closeSheet(); renderSearchBody(); },
+
+  'addr-sheet': () => openSheet('Domicilio del servicio', `<div class="rowlist">${ADDRESSES.map((x, i) => `<button class="row ${state.addr === i ? 'on' : ''}" data-action="set-addr" data-i="${i}"><span class="round">${icon(i ? 'list' : 'home')}</span><span class="grow"><b>${x.label}</b><div class="small muted">${x.text}</div></span><span class="radio"></span></button>`).join('')}</div><button class="btn light block" style="margin-top:12px" data-action="say" data-msg="Agregar domicilio (demostración)">${icon('plus', 18)}Agregar domicilio</button>`),
+  'set-addr': (el) => { state.addr = Number(el.dataset.i); closeSheet(); render(); },
+
+  pick: (el) => {
+    const proId = Number(el.dataset.pro), i = Number(el.dataset.i);
+    if (state.cart.proId !== proId) state.cart = { proId, items: [] };
+    const items = state.cart.items;
+    items.includes(i) ? items.splice(items.indexOf(i), 1) : items.push(i);
+    const on = items.includes(i);
+    el.classList.toggle('on', on);
+    el.setAttribute('aria-pressed', on);
+    el.querySelector('.add').innerHTML = icon(on ? 'check' : 'plus', 18);
+    $('#cartbar').innerHTML = cartBar(proById(proId));
+  },
+  when: (el) => {
+    state.checkout.when = el.dataset.v;
+    single('#when', el);
+    $('#slots').style.display = el.dataset.v === 'later' ? '' : 'none';
+    $('#whenNote').style.display = el.dataset.v === 'now' ? '' : 'none';
+  },
+  slot: (el) => single('#slots', el),
+  pay: (el) => { state.checkout.pay = Number(el.dataset.i); single('#pay', el); },
+
+  advance: () => state.active.step < 5 && setStep(state.active.step + 1),
+  restart: () => { state.active.times = []; setStep(0); },
+  'cancel-sheet': () => openSheet('¿Cancelar el pedido?', `<p class="muted" style="margin-bottom:20px">Todavía no tiene costo. Una vez que el profesional sale hacia el domicilio, la cancelación puede tener cargo.</p><button class="btn block" data-action="cancel">Sí, cancelar</button><button class="btn light block" style="margin-top:8px" data-action="close-sheet" data-force>Mantener pedido</button>`),
+  cancel: () => { state.active = null; syncTimer(); closeSheet(); location.hash = '#/'; toast('Pedido cancelado'); },
+
+  star: (el) => {
+    const n = Number(el.dataset.n);
+    el.closest('form').dataset.stars = n;
+    document.querySelectorAll('.starinput button').forEach((b) => {
+      b.classList.toggle('on', Number(b.dataset.n) <= n);
+      b.setAttribute('aria-checked', Number(b.dataset.n) === n);
+    });
+    $('#rateLabel').textContent = RATE_LABELS[n];
+    $('#rateSubmit').disabled = false;
+  },
+  tag: (el) => el.setAttribute('aria-pressed', el.classList.toggle('on')),
+  tip: (el) => single('#tips', el)
+};
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (el && actions[el.dataset.action]) actions[el.dataset.action](el, e);
+});
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'q') { state.filters.q = e.target.value; renderSearchBody(); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+
+const forms = {
+  'home-search': (form) => { resetFilters({ q: form.q.value.trim() }); location.hash = '#/buscar'; },
+  order: () => {
+    const p = proById(state.cart.proId);
+    const job = {
+      proId: p.id, items: state.cart.items.map((i) => p.services[i]), total: cartTotal() + APP_FEE,
+      address: ADDRESSES[state.addr].text, pay: state.checkout.pay, step: 0, progress: 0, times: [nowTime()],
+      pin: String(Math.floor(1000 + Math.random() * 9000))
+    };
+    state.active = job;
+    state.cart = { proId: null, items: [] };
+    syncTimer();
+    location.hash = '#/seguimiento';
+    // Simulates the professional accepting the request a few seconds later.
+    setTimeout(() => { if (state.active === job && job.step === 0) setStep(1); }, 5000);
+  },
+  rate: (form) => {
+    const stars = Number(form.dataset.stars);
+    if (form.dataset.job === 'active') {
+      const a = state.active;
+      state.jobs.unshift({ id: 'j' + Date.now(), proId: a.proId, title: a.items[0][0], date: 'Hoy', price: a.total, rating: stars });
+      state.active = null;
+    } else {
+      state.jobs.find((j) => j.id === form.dataset.job).rating = stars;
+    }
+    location.hash = '#/actividad';
+    toast('Calificación enviada. Gracias.');
+  }
+};
+
+document.addEventListener('submit', (e) => {
+  const form = e.target.closest('[data-form]');
+  if (!form) return;
+  e.preventDefault();
+  forms[form.dataset.form](form);
+});
+
+syncTimer();
+render();
+</script>
+</body>
+</html>
